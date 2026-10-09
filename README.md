@@ -30,3 +30,9 @@ npm run typecheck
 npm run lint
 npm run build
 ```
+
+## إعداد التحديث الهوائي OTA على Android
+
+يستخدم التطبيق إضافة [Capgo Capacitor Updater](https://capgo.app/docs/plugins/updater/) لتحديث ملفات الويب فقط دون تنزيل APK جديد. يجب تثبيت نسخة Android أصلية تحتوي على الإضافة مرة واحدة، ثم إعداد تطبيق Capgo بمعرّف `com.nour.adhkar` وقناة `production`.
+
+لرفع تحديث: أضف السر `CAPGO_TOKEN` إلى GitHub Actions ثم ادفع إلى `main`. تغييرات JavaScript وCSS وHTML تدعم OTA، أما تغييرات Android أو الصلاحيات فتحتاج إصدار APK/AAB جديدًا.

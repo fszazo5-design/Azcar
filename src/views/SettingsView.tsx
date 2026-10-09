@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Bell, Moon, Sun, Type, Clock, Vibrate, Info, ChevronLeft } from 'lucide-react';
+import { Bell, Moon, Sun, Type, Clock, Vibrate, Info, ChevronLeft, RefreshCw, Download, Check } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { useApp } from '@/context/AppContext';
 import { requestNotificationPermission } from '@/lib/notifications';
 import { vibrateClick } from '@/lib/vibrate';
@@ -50,6 +52,73 @@ function Section({ title, icon: Icon, children }: SectionProps) {
 export function SettingsView() {
   const { settings, updateSettings } = useApp();
   const [permStatus, setPermStatus] = useState<string>('');
+  const [otaBusy, setOtaBusy] = useState(false);
+  const [otaMessage, setOtaMessage] = useState('');
+  const [latestBundle, setLatestBundle] = useState<Awaited<ReturnType<typeof CapacitorUpdater.getLatest>> | null>(null);
+  const [downloadedBundle, setDownloadedBundle] = useState<{ id: string; version: string } | null>(null);
+
+  const checkForOtaUpdate = async () => {
+    if (!Capacitor.isNativePlatform()) {
+      setOtaMessage('التحديث الهوائي متاح في نسخة Android المثبّتة فقط.');
+      return;
+    }
+
+    setOtaBusy(true);
+    setOtaMessage('جارٍ التحقق من التحديثات…');
+    setLatestBundle(null);
+    setDownloadedBundle(null);
+    try {
+      const latest = await CapacitorUpdater.getLatest();
+      if (latest.kind === 'up_to_date' || latest.error === 'no_new_version_available') {
+        setOtaMessage('التطبيق محدّث إلى آخر إصدار.');
+      } else if (latest.kind === 'blocked') {
+        setOtaMessage('هذا التحديث غير متوافق مع نسخة التطبيق الحالية.');
+      } else if (!latest.url) {
+        setOtaMessage('تعذّر العثور على حزمة تحديث صالحة. حاول لاحقًا.');
+      } else {
+        setLatestBundle(latest);
+        setOtaMessage(`يتوفر تحديث جديد: ${latest.version}`);
+      }
+    } catch {
+      setOtaMessage('تعذّر الاتصال بخدمة التحديث. تحقّق من الإنترنت ثم أعد المحاولة.');
+    } finally {
+      setOtaBusy(false);
+    }
+  };
+
+  const downloadOtaUpdate = async () => {
+    if (!latestBundle?.url) return;
+    setOtaBusy(true);
+    setOtaMessage('جارٍ تنزيل التحديث…');
+    try {
+      const bundle = await CapacitorUpdater.download({
+        url: latestBundle.url,
+        version: latestBundle.version,
+        checksum: latestBundle.checksum,
+        sessionKey: latestBundle.sessionKey,
+        manifest: latestBundle.manifest,
+      });
+      setDownloadedBundle({ id: bundle.id, version: bundle.version });
+      setLatestBundle(null);
+      setOtaMessage(`اكتمل تنزيل الإصدار ${bundle.version}. يمكنك تثبيته الآن.`);
+    } catch {
+      setOtaMessage('فشل تنزيل التحديث. تحقّق من الاتصال ثم حاول مجددًا.');
+    } finally {
+      setOtaBusy(false);
+    }
+  };
+
+  const applyOtaUpdate = async () => {
+    if (!downloadedBundle) return;
+    setOtaBusy(true);
+    setOtaMessage('جارٍ تثبيت التحديث وإعادة تشغيل التطبيق…');
+    try {
+      await CapacitorUpdater.set({ id: downloadedBundle.id });
+    } catch {
+      setOtaBusy(false);
+      setOtaMessage('تعذّر تطبيق التحديث. سيبقى الإصدار الحالي كما هو.');
+    }
+  };
 
   const handleNotifToggle = async (key: 'morningNotification' | 'eveningNotification', value: boolean) => {
     if (value) {
@@ -164,12 +233,67 @@ export function SettingsView() {
         )}
       </Section>
 
+      {/* Over-the-air updates */}
+      <Section title="التحديث الهوائي (OTA)" icon={RefreshCw}>
+        <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+          <p>تحقّق من تحديثات التطبيق وثبّتها دون تنزيل ملف APK جديد.</p>
+          <div className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2 text-xs dark:bg-gray-700/40">
+            <span className="flex items-center gap-2"><Download size={15} /> قناة التحديث</span>
+            <span className="font-semibold text-primary-700 dark:text-primary-300">production</span>
+          </div>
+
+          {otaMessage && (
+            <p role="status" aria-live="polite" className="rounded-lg bg-primary-50 px-3 py-2 text-xs text-primary-700 dark:bg-primary-900/20 dark:text-primary-300">
+              {otaMessage}
+            </p>
+          )}
+
+          {!downloadedBundle && (
+            <button
+              type="button"
+              onClick={checkForOtaUpdate}
+              disabled={otaBusy}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-3 font-semibold text-white transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RefreshCw size={17} className={otaBusy ? 'animate-spin' : ''} />
+              {otaBusy ? 'يرجى الانتظار…' : 'التحقق من وجود تحديث'}
+            </button>
+          )}
+
+          {latestBundle?.url && (
+            <button
+              type="button"
+              onClick={downloadOtaUpdate}
+              disabled={otaBusy}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Download size={17} /> تنزيل الإصدار {latestBundle.version}
+            </button>
+          )}
+
+          {downloadedBundle && (
+            <button
+              type="button"
+              onClick={applyOtaUpdate}
+              disabled={otaBusy}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Check size={17} /> تثبيت الإصدار {downloadedBundle.version} الآن
+            </button>
+          )}
+
+          <p className="text-xs leading-relaxed text-gray-400">
+            يتطلب التحديث اتصالًا بالإنترنت وإعداد خدمة Capgo. تغييرات Android الأصلية تحتاج تحديثًا جديدًا من المتجر.
+          </p>
+        </div>
+      </Section>
+
       {/* About */}
       <Section title="حول التطبيق" icon={Info}>
         <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
           <div className="flex items-center justify-between">
             <span>الإصدار</span>
-            <span className="text-gray-400">1.0.0</span>
+            <span className="text-gray-400">1.0.1</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-2">
