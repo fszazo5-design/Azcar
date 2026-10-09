@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, type ReactN
 import type { Settings, TabKey } from '@/types';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { defaultSettings, applyTheme, applyFontScale } from '@/lib/settings';
-import { scheduleNotification, cancelNotification, requestNotificationPermission, parseTimeString } from '@/lib/notifications';
+import { scheduleNotification, cancelNotification, parseTimeString } from '@/lib/notifications';
 
 interface AppContextValue {
   settings: Settings;

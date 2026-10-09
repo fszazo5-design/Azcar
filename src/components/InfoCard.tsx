@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Copy, Check, Stethoscope, Lightbulb } from 'lucide-react';
+import { Copy, Check, Stethoscope, Lightbulb, HeartPulse, ScrollText } from 'lucide-react';
 import type { LibraryCard } from '@/types';
 import { vibrateClick } from '@/lib/vibrate';
 
@@ -25,7 +25,9 @@ export function InfoCard({ card, index }: Props) {
   };
 
   const isAid = card.section === 'first_aid';
-  const Icon = isAid ? Stethoscope : Lightbulb;
+  const isHealth = card.section === 'health';
+  const isReligion = card.section === 'religion';
+  const Icon = isAid ? Stethoscope : isHealth ? HeartPulse : isReligion ? ScrollText : Lightbulb;
 
   return (
     <div
@@ -37,7 +39,11 @@ export function InfoCard({ card, index }: Props) {
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
             isAid
               ? 'bg-error-100 text-error-600 dark:bg-error-500/20 dark:text-error-400'
-              : 'bg-warning-100 text-warning-600 dark:bg-warning-500/20 dark:text-warning-400'
+              : isHealth
+                ? 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-400'
+                : isReligion
+                  ? 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-400'
+                  : 'bg-warning-100 text-warning-600 dark:bg-warning-500/20 dark:text-warning-400'
           }`}
         >
           <Icon size={20} />

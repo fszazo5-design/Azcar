@@ -6,6 +6,7 @@ import { AdhkarView } from '@/views/AdhkarView';
 import { DuasView } from '@/views/DuasView';
 import { LibraryView } from '@/views/LibraryView';
 import { SettingsView } from '@/views/SettingsView';
+import { QuranView } from '@/views/QuranView';
 
 function MainContent() {
   const { tab } = useApp();
@@ -17,6 +18,7 @@ function MainContent() {
   return (
     <main className="mx-auto min-h-[calc(100vh-56px-64px)] max-w-2xl pb-8">
       {tab === 'adhkar' && <AdhkarView />}
+      {tab === 'quran' && <QuranView />}
       {tab === 'duas' && <DuasView />}
       {tab === 'library' && <LibraryView />}
       {tab === 'settings' && <SettingsView />}

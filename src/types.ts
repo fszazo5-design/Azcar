@@ -28,7 +28,7 @@ export interface DuaData {
 
 export interface LibraryCard {
   id: string;
-  section: 'first_aid' | 'wisdom';
+  section: 'first_aid' | 'wisdom' | 'health' | 'religion';
   title: string;
   body: string;
   tag?: string;
@@ -43,4 +43,4 @@ export interface Settings {
   eveningTime: string;
 }
 
-export type TabKey = 'adhkar' | 'duas' | 'library' | 'settings';
+export type TabKey = 'quran' | 'adhkar' | 'duas' | 'library' | 'settings';

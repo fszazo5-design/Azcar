@@ -1,9 +1,10 @@
-import { BookOpen, Heart, Info, Settings as SettingsIcon } from 'lucide-react';
+import { BookOpen, Heart, Info, Settings as SettingsIcon, Volume2 } from 'lucide-react';
 import type { TabKey } from '@/types';
 import { useApp } from '@/context/AppContext';
 import { vibrateClick } from '@/lib/vibrate';
 
 const tabs: { key: TabKey; label: string; icon: typeof BookOpen }[] = [
+  { key: 'quran', label: 'القرآن', icon: Volume2 },
   { key: 'adhkar', label: 'الأذكار', icon: BookOpen },
   { key: 'duas', label: 'الأدعية', icon: Heart },
   { key: 'library', label: 'معلومات', icon: Info },
