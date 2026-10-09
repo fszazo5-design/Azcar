@@ -1,5 +1,5 @@
-const CACHE_NAME = 'nour-v1';
-const ASSETS = ['/', '/index.html', '/vite.svg'];
+const CACHE_NAME = 'nour-v2';
+const ASSETS = ['/', '/index.html', '/noor-icon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

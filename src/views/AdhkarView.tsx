@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Sunrise, Moon, AlarmClock } from 'lucide-react';
 import type { DhikrCategory } from '@/types';
 import { morningAdhkar, eveningAdhkar, afterPrayerAdhkar } from '@/data/adhkar';

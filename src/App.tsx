@@ -1,4 +1,6 @@
 import { useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { AppProvider, useApp } from '@/context/AppContext';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
@@ -25,6 +27,13 @@ function MainContent() {
 }
 
 function App() {
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    void CapacitorUpdater.notifyAppReady().catch(() => {
+      // OTA is unavailable until a native build containing the plugin is installed.
+    });
+  }, []);
+
   return (
     <AppProvider>
       <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
