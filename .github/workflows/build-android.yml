@@ -77,11 +77,17 @@ jobs:
             KEYSTORE_B64="$(printf '%s\n' "$KEYSTORE_B64" | awk 'NF { value=$0 } END { print value }')"
             KEYSTORE_B64="${KEYSTORE_B64#ANDROID_KEYSTORE_BASE64=}"
             printf '%s' "$KEYSTORE_B64" | base64 --decode --ignore-garbage > release.keystore
+            STORE_PASS="$(printf '%s\n' '${{ secrets.ANDROID_KEYSTORE_PASSWORD }}' | awk 'NF { value=$0 } END { print value }')"
+            STORE_PASS="${STORE_PASS#ANDROID_KEYSTORE_PASSWORD=}"
+            KEY_ALIAS="$(printf '%s\n' '${{ secrets.ANDROID_KEY_ALIAS }}' | awk 'NF { value=$0 } END { print value }')"
+            KEY_ALIAS="${KEY_ALIAS#ANDROID_KEY_ALIAS=}"
+            KEY_PASS="$(printf '%s\n' '${{ secrets.ANDROID_KEY_PASSWORD }}' | awk 'NF { value=$0 } END { print value }')"
+            KEY_PASS="${KEY_PASS#ANDROID_KEY_PASSWORD=}"
             ./gradlew bundleRelease \
               -Pandroid.injected.signing.store.file=release.keystore \
-              -Pandroid.injected.signing.store.password=${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
-              -Pandroid.injected.signing.key.alias=${{ secrets.ANDROID_KEY_ALIAS }} \
-              -Pandroid.injected.signing.key.password=${{ secrets.ANDROID_KEY_PASSWORD }}
+              "-Pandroid.injected.signing.store.password=$STORE_PASS" \
+              "-Pandroid.injected.signing.key.alias=$KEY_ALIAS" \
+              "-Pandroid.injected.signing.key.password=$KEY_PASS"
           else
             echo "No signing secrets found — skipping signing step"
           fi
