@@ -1,6 +1,7 @@
 import type { Dhikr, DhikrCategory, LibraryCard } from '@/types';
 
 const QURAN_API = 'https://api.alquran.cloud/v1';
+const AUDIO_CDN = 'https://cdn.islamic.network/quran/audio/128';
 const ADHKAR_BASE = 'https://ahegazy.github.io/muslimKit/json';
 
 export const reciters = [
@@ -22,9 +23,11 @@ export interface SurahSummary {
 }
 
 export interface SurahAudioAyah {
+  number: number;
   numberInSurah: number;
   text: string;
   audio: string;
+  audioSecondary?: string[];
 }
 
 export interface SurahDetails extends SurahSummary {
@@ -34,9 +37,20 @@ export interface SurahDetails extends SurahSummary {
 interface AdhkarResponse { title: string; content: { zekr: string; repeat: number; bless?: string }[] }
 
 async function getJson<T>(url: string): Promise<T> {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`API ${response.status}`);
-  return response.json() as Promise<T>;
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetch(url, { signal: controller.signal, headers: { Accept: 'application/json' } });
+    if (!response.ok) throw new Error(`API ${response.status}`);
+    return await response.json() as T;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+/** رابط CDN مباشر كحل احتياطي عندما لا يعيد المصدر رابط الصوت. */
+export function getAyahAudioUrl(ayahNumber: number, reciter: string): string {
+  return `${AUDIO_CDN}/${reciter}/${ayahNumber}.mp3`;
 }
 
 export async function getSurahs(): Promise<SurahSummary[]> {
@@ -46,7 +60,13 @@ export async function getSurahs(): Promise<SurahSummary[]> {
 
 export async function getSurah(number: number, reciter = 'ar.alafasy'): Promise<SurahDetails> {
   const result = await getJson<{ data: SurahDetails }>(`${QURAN_API}/surah/${number}/${reciter}`);
-  return result.data;
+  return {
+    ...result.data,
+    ayahs: result.data.ayahs.map((ayah) => ({
+      ...ayah,
+      audio: ayah.audio || getAyahAudioUrl(ayah.number, reciter),
+    })),
+  };
 }
 
 export async function getAdhkar(category: Exclude<DhikrCategory, 'after_prayer'>): Promise<Dhikr[]> {
@@ -70,6 +90,6 @@ export async function getInfoCards(endpoint = import.meta.env.VITE_INFO_API_URL)
 
 export const apiSources = {
   quran: 'https://alquran.cloud/api',
-  audio: 'https://alquran.cloud/cdn',
+  audio: 'https://cdn.islamic.network/quran/audio/128',
   adhkar: 'https://ahegazy.github.io/muslimKit/json/',
 };
