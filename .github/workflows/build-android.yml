@@ -84,7 +84,7 @@ jobs:
             KEY_PASS="$(printf '%s\n' '${{ secrets.ANDROID_KEY_PASSWORD }}' | awk 'NF { value=$0 } END { print value }')"
             KEY_PASS="${KEY_PASS#ANDROID_KEY_PASSWORD=}"
             ./gradlew bundleRelease \
-              -Pandroid.injected.signing.store.file=release.keystore \
+              "-Pandroid.injected.signing.store.file=$PWD/release.keystore" \
               "-Pandroid.injected.signing.store.password=$STORE_PASS" \
               "-Pandroid.injected.signing.key.alias=$KEY_ALIAS" \
               "-Pandroid.injected.signing.key.password=$KEY_PASS"
