@@ -72,7 +72,11 @@ jobs:
         working-directory: android
         run: |
           if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
-            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+            # Accept either the raw Base64 value or the named value copied from our secret file.
+            KEYSTORE_B64='${{ secrets.ANDROID_KEYSTORE_BASE64 }}'
+            KEYSTORE_B64="$(printf '%s\n' "$KEYSTORE_B64" | awk 'NF { value=$0 } END { print value }')"
+            KEYSTORE_B64="${KEYSTORE_B64#ANDROID_KEYSTORE_BASE64=}"
+            printf '%s' "$KEYSTORE_B64" | base64 --decode --ignore-garbage > release.keystore
             ./gradlew bundleRelease \
               -Pandroid.injected.signing.store.file=release.keystore \
               -Pandroid.injected.signing.store.password=${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
